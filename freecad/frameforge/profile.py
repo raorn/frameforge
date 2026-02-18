@@ -20,6 +20,26 @@ from freecad.frameforge.extrusions import (
 vec = App.Base.Vector
 
 
+def _normalize_anchor(val):
+    """Normalize anchor to int 0–2. Accepts bool (legacy: True→1, False→0) or int; e.g. from custom macros."""
+    if isinstance(val, bool):
+        return 1 if val else 0
+    return max(0, min(2, int(val)))
+
+
+def _migrate_anchor(obj):
+    """Backward compat: add AnchorX/AnchorY from CenteredOn* when missing (old .FCStd or edit before recompute)."""
+    if not hasattr(obj, "AnchorX") or not hasattr(obj, "AnchorY"):
+        obj.addProperty(
+            "App::PropertyInteger", "AnchorX", "Profile",
+            "Anchor X: 0=left, 1=center, 2=right (path alignment)"
+        ).AnchorX = 1 if getattr(obj, "CenteredOnWidth", False) else 0
+        obj.addProperty(
+            "App::PropertyInteger", "AnchorY", "Profile",
+            "Anchor Y: 0=bottom, 1=center, 2=top (path alignment)"
+        ).AnchorY = 1 if getattr(obj, "CenteredOnHeight", False) else 0
+
+
 class Profile:
     def __init__(
         self,
@@ -33,8 +53,8 @@ class Profile:
         init_len,
         init_wg,
         init_mf,
-        init_hc,
-        init_wc,
+        init_anchor_x,
+        init_anchor_y,
         material,
         fam,
         size_name,
@@ -44,7 +64,7 @@ class Profile:
     ):
         """
         Constructor. Add properties to FreeCAD Profile object. Profile object have 11 nominal properties associated
-        with initialization value 'init_w' to 'init_wc' : ProfileHeight, ProfileWidth, [...] CenteredOnWidth. Depending
+        with initialization value 'init_w' to 'init_anchor_y' : ProfileHeight, ProfileWidth, [...] AnchorY (0,1,2). Depending
         on 'bevels_combined' parameters, there is 4 others properties for bevels : BevelStartCut1, etc. Depending on
         'fam' parameter, there is properties specific to profile family.
         """
@@ -130,11 +150,16 @@ class Profile:
         )
 
         obj.addProperty(
-            "App::PropertyBool", "CenteredOnHeight", "Profile", "Choose corner or profile centre as origin"
-        ).CenteredOnHeight = init_hc
+            "App::PropertyInteger", "AnchorX", "Profile",
+            "Anchor X: 0=left, 1=center, 2=right (path alignment)"
+        ).AnchorX = _normalize_anchor(init_anchor_x)
         obj.addProperty(
-            "App::PropertyBool", "CenteredOnWidth", "Profile", "Choose corner or profile centre as origin"
-        ).CenteredOnWidth = init_wc
+            "App::PropertyInteger", "AnchorY", "Profile",
+            "Anchor Y: 0=bottom, 1=center, 2=top (path alignment)"
+        ).AnchorY = _normalize_anchor(init_anchor_y)
+        if hasattr(obj, "CenteredOnWidth") or hasattr(obj, "CenteredOnHeight"):
+            obj.AnchorX = 1 if getattr(obj, "CenteredOnWidth", False) else 0
+            obj.AnchorY = 1 if getattr(obj, "CenteredOnHeight", False) else 0
 
         if fam == "UPE":
             obj.addProperty("App::PropertyBool", "UPN", "Profile", "UPE style or UPN style").UPN = False
@@ -201,12 +226,13 @@ class Profile:
         init_len,
         init_wg,
         init_mf,
-        init_hc,
-        init_wc,
+        init_anchor_x,
+        init_anchor_y,
         material,
         fam,
         size_name,
     ):
+        _migrate_anchor(obj)
 
         obj.Material = material
         obj.Family = fam
@@ -244,8 +270,8 @@ class Profile:
 
         obj.ApproxWeight = init_wg * init_len / 1000
 
-        obj.CenteredOnHeight = init_hc
-        obj.CenteredOnWidth = init_wc
+        obj.AnchorX = _normalize_anchor(init_anchor_x)
+        obj.AnchorY = _normalize_anchor(init_anchor_y)
 
         if obj.Family == "UPE":
             obj.UPN = False
@@ -287,6 +313,8 @@ class Profile:
             or p == "BevelEndRotate"
             or p == "OffsetA"
             or p == "OffsetB"
+            or p == "AnchorX"
+            or p == "AnchorY"
         ):
             self.execute(obj)
 
@@ -372,10 +400,11 @@ class Profile:
             B1X = 0
             B2X = 0
 
-        if obj.CenteredOnWidth == True:
-            w = -W / 2
-        if obj.CenteredOnHeight == True:
-            h = -H / 2
+        _migrate_anchor(obj)
+        ax = max(0, min(2, obj.AnchorX))
+        ay = max(0, min(2, obj.AnchorY))
+        w = -W * ax / 2
+        h = -H * ay / 2
 
         if obj.Family == "Equal Leg Angles" or obj.Family == "Unequal Leg Angles":
             if obj.MakeFillet == False:
