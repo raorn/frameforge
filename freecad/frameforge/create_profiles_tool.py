@@ -34,10 +34,6 @@ class CreateProfileTaskPanel:
                 self.profiles[material_name] = json.load(fd)
 
     def initialize_ui(self):
-        def execute_if_has_bool(key, func):
-            if key in [k for t, k, v in param.GetContents()]:
-                func(param.GetBool(key))
-
         self.form_proxy.label_image.setPixmap(QtGui.QPixmap(os.path.join(PROFILEIMAGES_PATH, "Warehouse.png")))
 
         self.form_proxy.combo_material.currentIndexChanged.connect(self.on_material_changed)
@@ -48,31 +44,54 @@ class CreateProfileTaskPanel:
 
         self.form_proxy.combo_material.addItems([k for k in self.profiles])
 
+        self._load_preferences()
+
+    def get_anchor(self):
+        """Return (anchor_x, anchor_y) 0=left/bottom, 1=center, 2=right/top."""
+        for ax in range(3):
+            for ay in range(3):
+                if getattr(self.form_proxy, f"rb_anchor_{ax}_{ay}").isChecked():
+                    return (ax, ay)
+        return (1, 1)
+
+    def set_anchor(self, anchor_x, anchor_y):
+        ax = max(0, min(2, anchor_x))
+        ay = max(0, min(2, anchor_y))
+        getattr(self.form_proxy, f"rb_anchor_{ax}_{ay}").setChecked(True)
+
+    def _load_preferences(self):
         param = App.ParamGet("User parameter:BaseApp/Preferences/Frameforge")
-        if not param.IsEmpty():
-            default_material_index = self.form_proxy.combo_material.findText(
-                param.GetString("Default Profile Material")
-            )
-            if default_material_index > -1:
-                self.form_proxy.combo_material.setCurrentIndex(default_material_index)
+        if param.IsEmpty():
+            return
 
-                default_family_index = self.form_proxy.combo_family.findText(param.GetString("Default Profile Family"))
-                if default_family_index > -1:
-                    self.form_proxy.combo_family.setCurrentIndex(default_family_index)
-
-                    default_size_index = self.form_proxy.combo_size.findText(param.GetString("Default Profile Size"))
-                    if default_size_index > -1:
-                        self.form_proxy.combo_size.setCurrentIndex(default_size_index)
-
-            execute_if_has_bool("Default Sketch in Name", self.form_proxy.cb_sketch_in_name.setChecked)
-            execute_if_has_bool("Default Family in Name", self.form_proxy.cb_family_in_name.setChecked)
-            execute_if_has_bool("Default Size in Name", self.form_proxy.cb_size_in_name.setChecked)
-            execute_if_has_bool("Default Prefix Profile in Name", self.form_proxy.cb_prefix_profile_in_name.setChecked)
-            execute_if_has_bool("Default Reverse Attachement", self.form_proxy.cb_reverse_attachment.setChecked)
-            execute_if_has_bool("Default Make Fillet", self.form_proxy.cb_make_fillet.setChecked)
-            execute_if_has_bool("Default Height Centered", self.form_proxy.cb_height_centered.setChecked)
-            execute_if_has_bool("Default Width Centered", self.form_proxy.cb_width_centered.setChecked)
-            execute_if_has_bool("Default Centered Bevel", self.form_proxy.cb_combined_bevel.setChecked)
+        def execute_if_has_bool(key, func):
+            if key in [k for t, k, v in param.GetContents()]:
+                func(param.GetBool(key))
+        default_material_index = self.form_proxy.combo_material.findText(param.GetString("Default Profile Material"))
+        if default_material_index > -1:
+            self.form_proxy.combo_material.setCurrentIndex(default_material_index)
+            default_family_index = self.form_proxy.combo_family.findText(param.GetString("Default Profile Family"))
+            if default_family_index > -1:
+                self.form_proxy.combo_family.setCurrentIndex(default_family_index)
+                default_size_index = self.form_proxy.combo_size.findText(param.GetString("Default Profile Size"))
+                if default_size_index > -1:
+                    self.form_proxy.combo_size.setCurrentIndex(default_size_index)
+        execute_if_has_bool("Default Sketch in Name", self.form_proxy.cb_sketch_in_name.setChecked)
+        execute_if_has_bool("Default Family in Name", self.form_proxy.cb_family_in_name.setChecked)
+        execute_if_has_bool("Default Size in Name", self.form_proxy.cb_size_in_name.setChecked)
+        execute_if_has_bool("Default Prefix Profile in Name", self.form_proxy.cb_prefix_profile_in_name.setChecked)
+        execute_if_has_bool("Default Reverse Attachement", self.form_proxy.cb_reverse_attachment.setChecked)
+        execute_if_has_bool("Default Make Fillet", self.form_proxy.cb_make_fillet.setChecked)
+        keys = [k for t, k, v in param.GetContents()]
+        if "Default AnchorX" in keys:
+            ax = max(0, min(2, param.GetInt("Default AnchorX", 1)))
+            ay = max(0, min(2, param.GetInt("Default AnchorY", 1)))
+            self.set_anchor(ax, ay)
+        elif "Default Width Centered" in keys or "Default Height Centered" in keys:
+            ax = 1 if param.GetBool("Default Width Centered", False) else 0
+            ay = 1 if param.GetBool("Default Height Centered", False) else 0
+            self.set_anchor(ax, ay)
+        execute_if_has_bool("Default Centered Bevel", self.form_proxy.cb_combined_bevel.setChecked)
 
     def on_material_changed(self, index):
         material = str(self.form_proxy.combo_material.currentText())
@@ -188,8 +207,9 @@ class CreateProfileTaskPanel:
             param.SetBool("Default Reverse Attachement", self.form_proxy.cb_reverse_attachment.isChecked())
 
             param.SetBool("Default Make Fillet", self.form_proxy.cb_make_fillet.isChecked())
-            param.SetBool("Default Height Centered", self.form_proxy.cb_height_centered.isChecked())
-            param.SetBool("Default Width Centered", self.form_proxy.cb_width_centered.isChecked())
+            ax, ay = self.get_anchor()
+            param.SetInt("Default AnchorX", ax)
+            param.SetInt("Default AnchorY", ay)
             param.SetBool("Default Centered Bevel", self.form_proxy.cb_combined_bevel.isChecked())
 
             self.proceed()
@@ -304,8 +324,7 @@ class CreateProfileTaskPanel:
             self.form_proxy.sb_length.value(),
             self.form_proxy.sb_weight.value(),
             self.form_proxy.cb_make_fillet.isChecked(),  # and self.form_proxy.family.currentText() not in ["Flat Sections", "Square", "Round Bar"],
-            self.form_proxy.cb_height_centered.isChecked(),
-            self.form_proxy.cb_width_centered.isChecked(),
+            *self.get_anchor(),
             self.form_proxy.combo_material.currentText(),
             self.form_proxy.combo_family.currentText(),
             self.form_proxy.combo_size.currentText(),

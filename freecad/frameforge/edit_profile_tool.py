@@ -32,8 +32,13 @@ class EditProfileTaskPanel(CreateProfileTaskPanel):
         self.form_proxy.sb_length.setValue(self.profile.ProfileLength)
         self.form_proxy.sb_weight.setValue(self.profile.ApproxWeight)
         self.form_proxy.cb_make_fillet.setChecked(self.profile.MakeFillet)
-        self.form_proxy.cb_height_centered.setChecked(self.profile.CenteredOnHeight)
-        self.form_proxy.cb_width_centered.setChecked(self.profile.CenteredOnWidth)
+        if hasattr(self.profile, "AnchorX"):
+            ax = max(0, min(2, self.profile.AnchorX))
+            ay = max(0, min(2, self.profile.AnchorY))
+        else:
+            ax = 1 if getattr(self.profile, "CenteredOnWidth", False) else 0
+            ay = 1 if getattr(self.profile, "CenteredOnHeight", False) else 0
+        self.set_anchor(ax, ay)
 
         self.form_proxy.combo_material.setCurrentText(self.profile.Material)
         self.form_proxy.combo_family.setCurrentText(self.profile.Family)
@@ -67,8 +72,7 @@ class EditProfileTaskPanel(CreateProfileTaskPanel):
             self.form_proxy.sb_length.value(),
             self.form_proxy.sb_weight.value(),
             self.form_proxy.cb_make_fillet.isChecked(),  # and self.form_proxy.family.currentText() not in ["Flat Sections", "Square", "Round Bar"],
-            self.form_proxy.cb_height_centered.isChecked(),
-            self.form_proxy.cb_width_centered.isChecked(),
+            *self.get_anchor(),
             self.form_proxy.combo_material.currentText(),
             self.form_proxy.combo_family.currentText(),
             self.form_proxy.combo_size.currentText(),

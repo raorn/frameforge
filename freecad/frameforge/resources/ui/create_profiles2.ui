@@ -188,23 +188,43 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="cb_width_centered">
-          <property name="text">
-           <string>Width Centered</string>
+         <widget class="QGroupBox" name="group_anchor">
+          <property name="title">
+           <string>Path alignment</string>
           </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cb_height_centered">
-          <property name="text">
-           <string>Height Centered</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
+          <layout class="QGridLayout" name="grid_anchor">
+           <item row="0" column="0">
+            <widget class="QRadioButton" name="rb_anchor_00"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QRadioButton" name="rb_anchor_10"/>
+           </item>
+           <item row="0" column="2">
+            <widget class="QRadioButton" name="rb_anchor_20"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QRadioButton" name="rb_anchor_01"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QRadioButton" name="rb_anchor_11">
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QRadioButton" name="rb_anchor_21"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QRadioButton" name="rb_anchor_02"/>
+           </item>
+           <item row="2" column="1">
+            <widget class="QRadioButton" name="rb_anchor_12"/>
+           </item>
+           <item row="2" column="2">
+            <widget class="QRadioButton" name="rb_anchor_22"/>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>

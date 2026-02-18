@@ -135,8 +135,8 @@ class CreateCustomProfileTaskPanel:
             self.form.sb_length.value(),
             self.form.sb_weight.value(),
             False,  # self.form.cb_make_fillet.isChecked(),  # and self.form.family.currentText() not in ["Flat Sections", "Square", "Round Bar"],
-            False,  # self.form.cb_height_centered.isChecked(),
-            False,  # self.form.cb_width_centered.isChecked(),
+            1,  # anchor_x (center)
+            1,  # anchor_y (center)
             self.form.le_material.text(),  # self.form.combo_material.currentText(),
             "Custom Profile",  # self.form.combo_family.currentText(),
             "None",  # self.form.combo_size.currentText(),
