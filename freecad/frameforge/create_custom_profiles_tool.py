@@ -131,7 +131,7 @@ class CreateCustomProfileTaskPanel:
             0.0,  # self.form.sb_radius2.value(),
             self.form.sb_length.value(),
             self.form.sb_weight.value(),
-            0.0,  # init_unit_price (no UI in custom profile dialog)
+            self.form.sb_unitprice.value(),
             False,  # self.form.cb_make_fillet.isChecked(),  # and self.form.family.currentText() not in ["Flat Sections", "Square", "Round Bar"],
             1,  # self.form.cb_width_centered → center
             1,  # self.form.cb_height_centered → center
