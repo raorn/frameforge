@@ -108,9 +108,14 @@ class CreateProfileTaskPanel:
         self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
         self.form_proxy.cb_reverse_attachment.stateChanged.connect(self.proceed)
         self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
-        self.form_proxy.cb_height_centered.stateChanged.connect(self.proceed)
-        self.form_proxy.cb_width_centered.stateChanged.connect(self.proceed)
         self.form_proxy.cb_combined_bevel.stateChanged.connect(self.proceed)
+
+        self.form_proxy.cb_mirror_h.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_mirror_v.stateChanged.connect(self.proceed)
+        self.form_proxy.combo_rotation.currentIndexChanged.connect(self.proceed)
+        for ax in range (3):
+            for ay in range (3):
+                getattr(self.form_proxy, f"rb_anchor_{ax}_{ay}").clicked.connect(self.proceed)
 
         self.proceed()
 
