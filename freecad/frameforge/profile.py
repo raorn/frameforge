@@ -215,6 +215,16 @@ class Profile:
             obj.addProperty("App::PropertyBool", "IPN", "Profile", "IPE/HEA style or IPN style").IPN = True
             obj.addProperty("App::PropertyFloat", "FlangeAngle", "Profile").FlangeAngle = 8
 
+        if link_sub:
+            obj.addProperty("App::PropertyLinkSub", "Target", "Base", "Target face").Target = link_sub
+
+        if custom_profile:
+            obj.CustomProfile = custom_profile
+            obj.Family = "Custom Profile"
+
+            obj.ProfileWidth = custom_profile.Shape.BoundBox.XLength
+            obj.ProfileHeight = custom_profile.Shape.BoundBox.YLength
+
         # structure
         obj.addProperty("App::PropertyLength", "Width", "Structure", "Parameter for structure").Width = obj.ProfileWidth
         obj.addProperty("App::PropertyLength", "Height", "Structure", "Parameter for structure").Height = (
@@ -247,13 +257,6 @@ class Profile:
             "Cutting Angle B",
         )
         obj.setEditorMode("CuttingAngleB", 1)
-
-        if link_sub:
-            obj.addProperty("App::PropertyLinkSub", "Target", "Base", "Target face").Target = link_sub
-
-        if custom_profile:
-            obj.CustomProfile = custom_profile
-            obj.Family = "Custom Profile"
 
         self.bevels_combined = bevels_combined
         obj.Proxy = self
@@ -1099,6 +1102,10 @@ class Profile:
         obj.recompute()
 
     def _update_structure_data(self, obj):
+        if obj.Family == "Custom Profile":
+            obj.ProfileWidth = obj.CustomProfile.Shape.BoundBox.XLength
+            obj.ProfileHeight = obj.CustomProfile.Shape.BoundBox.YLength
+
         obj.Width = obj.ProfileWidth
         obj.Height = obj.ProfileHeight
 
