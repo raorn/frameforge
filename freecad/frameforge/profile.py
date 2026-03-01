@@ -198,6 +198,8 @@ class Profile:
         obj.addProperty(
             "App::PropertyFloat", "RotationAngle", "Profile", "Rotation of cross-section around path axis (degrees)"
         ).RotationAngle = float(init_rotation)
+        # Apply rotation via AttachmentOffset (Angle in degrees)
+        obj.setExpression(".AttachmentOffset.Rotation.Angle", "RotationAngle")
 
         if fam == "UPE":
             obj.addProperty("App::PropertyBool", "UPN", "Profile", "UPE style or UPN style").UPN = False
@@ -1043,10 +1045,6 @@ class Profile:
         if mirror_v:
             p = p.mirror(center_pt, vec(0, 1, 0))
 
-        rot_angle = getattr(obj, "RotationAngle", 0.0)
-        if rot_angle != 0:
-            p = p.rotate(vec(0, 0, 0), vec(0, 0, 1), rot_angle)
-
         if L:
             p = p.copy()
             p.translate(vec(0, 0, -obj.OffsetA))
@@ -1087,13 +1085,11 @@ class Profile:
             obj.Shape = ProfileFull
 
         else:
-            # Anchor already applied when building wire1; mirror then rotation.
+            # Anchor already applied when building wire1; mirror only
             if mirror_h:
                 wire1 = wire1.mirror(center_pt, vec(1, 0, 0))
             if mirror_v:
                 wire1 = wire1.mirror(center_pt, vec(0, 1, 0))
-            if rot_angle != 0:
-                wire1 = wire1.rotate(vec(0, 0, 0), vec(0, 0, 1), rot_angle)
             obj.Shape = Part.Face(wire1)
 
         self._update_structure_data(obj)
@@ -1253,14 +1249,15 @@ class Profile:
                 if hasattr(obj, "CenteredOnHeight"):
                     obj.removeProperty("CenteredOnHeight")
 
-            # RotationAngle: add if missing (handled in code like OffsetA)
+            # RotationAngle: add if missing (driven by AttachmentOffset expression)
             if not hasattr(obj, "RotationAngle"):
                 obj.addProperty(
                     "App::PropertyFloat",
                     "RotationAngle",
                     "Profile",
                     "Rotation of cross-section around path axis (degrees)",
-                ).RotationAngle = 0.0
+                ).RotationAngle = obj.AttachmentOffset.Rotation.Angle
+                obj.setExpression(".AttachmentOffset.Rotation.Angle", "RotationAngle")
 
             # MirrorH / MirrorV: add if missing
             if not hasattr(obj, "MirrorH"):
