@@ -12,15 +12,16 @@ from freecad.frameforge.profile import ANCHOR_X, ANCHOR_Y, Profile, ViewProvider
 
 class EditProfileTaskPanel(BaseProfileTaskPanel):
     def __init__(self, profile):
-        super().__init__()
-
         self.profile = profile
         self.dump = profile.dumpContent()
 
-        # connect all the control to    slots that will update the profile...
-        self.init_ui()
+        super().__init__()
 
-    def init_ui(self):
+        self.proceed()
+
+    def initialize_ui(self):
+        super().initialize_ui()
+
         self.form_proxy.groupBox_5.setEnabled(False)
 
         self.form_proxy.sb_width.setValue(self.profile.ProfileWidth)
@@ -56,6 +57,9 @@ class EditProfileTaskPanel(BaseProfileTaskPanel):
     def open(self):
         App.ActiveDocument.openTransaction("Edit Profile")
 
+        self.profile.ViewObject.Transparency = 80
+        self.profile.ViewObject.ShapeColor = (0.8, 0.2, 0.2)
+
     def reject(self):
         self.profile.restoreContent(self.dump)
         Gui.ActiveDocument.resetEdit()
@@ -68,6 +72,20 @@ class EditProfileTaskPanel(BaseProfileTaskPanel):
         return True
 
     def accept(self):
+        self.proceed()
+
+        self.profile.ViewObject.Transparency = 0
+        self.profile.ViewObject.ShapeColor = (0.44, 0.47, 0.5)
+
+        App.ActiveDocument.commitTransaction()
+
+        App.ActiveDocument.recompute()
+        Gui.ActiveDocument.resetEdit()
+
+        return True
+
+
+    def proceed(self):
         self.profile.Proxy.set_properties(
             self.profile,
             self.form_proxy.sb_width.value(),
@@ -89,9 +107,4 @@ class EditProfileTaskPanel(BaseProfileTaskPanel):
             init_rotation=self.get_rotation(),
         )
 
-        App.ActiveDocument.commitTransaction()
-
-        App.ActiveDocument.recompute()
-        Gui.ActiveDocument.resetEdit()
-
-        return True
+        self.profile.recompute()

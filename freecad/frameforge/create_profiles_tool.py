@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+from abc import ABC, abstractmethod
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -10,7 +11,7 @@ from freecad.frameforge.ff_tools import ICONPATH, PROFILEIMAGES_PATH, PROFILESPA
 from freecad.frameforge.profile import Profile, ViewProviderProfile
 
 
-class BaseProfileTaskPanel:
+class BaseProfileTaskPanel(ABC):
     def __init__(self):
         self._objects = []
 
@@ -102,6 +103,21 @@ class BaseProfileTaskPanel:
                 except (TypeError, ValueError):
                     self.form_proxy.combo_rotation.setCurrentText("0")
             execute_if_has_bool("Default Centered Bevel", self.form_proxy.cb_combined_bevel.setChecked)
+
+        # connect to proceed
+        self.form_proxy.combo_size.currentIndexChanged.connect(self.proceed)
+        self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_reverse_attachment.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_combined_bevel.stateChanged.connect(self.proceed)
+
+        self.form_proxy.cb_mirror_h.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_mirror_v.stateChanged.connect(self.proceed)
+        self.form_proxy.combo_rotation.currentIndexChanged.connect(self.proceed)
+        for ax in range (3):
+            for ay in range (3):
+                getattr(self.form_proxy, f"rb_anchor_{ax}_{ay}").clicked.connect(self.proceed)
+
 
     def get_anchor(self):
         """Return (anchor_x, anchor_y) 0=left/bottom, 1=center, 2=right/top."""
@@ -214,25 +230,27 @@ class BaseProfileTaskPanel:
 
         self.form_proxy.label_image.setPixmap(QtGui.QPixmap(os.path.join(PROFILEIMAGES_PATH, material, img_name)))
 
+    @abstractmethod
+    def proceed(self):
+        pass
+
+    @abstractmethod
+    def open(self):
+        pass
+
+    @abstractmethod
+    def reject(self):
+        return True
+
+    @abstractmethod
+    def accept(self):
+        return True
+
 
 class CreateProfileTaskPanel(BaseProfileTaskPanel):
     def __init__(self):
         super().__init__()
-
-        # connect to proceed
-        self.form_proxy.combo_size.currentIndexChanged.connect(self.proceed)
-        self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
-        self.form_proxy.cb_reverse_attachment.stateChanged.connect(self.proceed)
-        self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
-        self.form_proxy.cb_combined_bevel.stateChanged.connect(self.proceed)
-
-        self.form_proxy.cb_mirror_h.stateChanged.connect(self.proceed)
-        self.form_proxy.cb_mirror_v.stateChanged.connect(self.proceed)
-        self.form_proxy.combo_rotation.currentIndexChanged.connect(self.proceed)
-        for ax in range (3):
-            for ay in range (3):
-                getattr(self.form_proxy, f"rb_anchor_{ax}_{ay}").clicked.connect(self.proceed)
-
+        
         self.proceed()
 
     def open(self):
