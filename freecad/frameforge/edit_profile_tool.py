@@ -76,7 +76,6 @@ class EditProfileTaskPanel(BaseProfileTaskPanel):
 
         return True
 
-
     def proceed(self):
         self.profile.Proxy.set_properties(
             self.profile,
