@@ -105,9 +105,6 @@ class CreateCustomProfileTaskPanel:
             sk_parent = sketch.Parents[-1][0]
             sk_parent.addObject(obj)
 
-        # Create a ViewObject in current GUI
-        ViewProviderCustomProfile(obj.ViewObject)
-
         if sketch is not None and edge is not None:
             # Tuple assignment for edge
             feature = sketch
@@ -146,6 +143,9 @@ class CreateCustomProfileTaskPanel:
             self.custom_profile,
             init_rotation=0.0,
         )
+
+        # Create a ViewObject in current GUI
+        ViewProviderCustomProfile(obj.ViewObject)
 
     def select_profile(self):
         if not self.select_profile_flag:
