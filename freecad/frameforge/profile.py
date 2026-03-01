@@ -1121,7 +1121,7 @@ class Profile:
         obj.CuttingAngleB = cut_angles[1]
 
     def run_compatibility_migrations(self, obj):
-        if not hasattr(obj, "FrameforgeVersion"):
+        if not hasattr(obj, "FrameforgeVersion"): # previous that 0.1.7
             if not hasattr(obj, "PID"):
                 obj.addProperty(
                     "App::PropertyString",
@@ -1285,7 +1285,11 @@ class Profile:
             ).FrameforgeVersion = ff_version
 
         else:
-            if obj.FrameforgeVersion == "0.1.8":
+            if obj.FrameforgeVersion == "0.2.0":
+                # exemple: perform migration. Something like that ?
+                # if ff_version == "0.2.1"
+                    # obj.AProperty = ...
+                    # obj.FrameforgeVersion = ff_version
                 pass
 
 
