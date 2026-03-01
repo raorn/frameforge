@@ -57,17 +57,11 @@ class EditProfileTaskPanel(BaseProfileTaskPanel):
     def open(self):
         App.ActiveDocument.openTransaction("Edit Profile")
 
-        self.profile.ViewObject.Transparency = 80
-        self.profile.ViewObject.ShapeColor = (0.8, 0.2, 0.2)
+        self.profile.ViewObject.Transparency = 50
+        self.profile.ViewObject.ShapeColor = (0.8, 0.2, 0.1)
 
     def reject(self):
-        self.profile.restoreContent(self.dump)
-        Gui.ActiveDocument.resetEdit()
-
-        App.ActiveDocument.commitTransaction()
-
-        App.ActiveDocument.recompute()
-        Gui.ActiveDocument.resetEdit()
+        App.ActiveDocument.abortTransaction()
 
         return True
 
@@ -78,9 +72,7 @@ class EditProfileTaskPanel(BaseProfileTaskPanel):
         self.profile.ViewObject.ShapeColor = (0.44, 0.47, 0.5)
 
         App.ActiveDocument.commitTransaction()
-
         App.ActiveDocument.recompute()
-        Gui.ActiveDocument.resetEdit()
 
         return True
 
