@@ -12,6 +12,8 @@ from freecad.frameforge.profile import Profile, ViewProviderProfile
 
 class CreateProfileTaskPanel:
     def __init__(self):
+        self._objects = []
+
         self.form = [
             Gui.PySideUic.loadUi(os.path.join(UIPATH, "create_profiles1.ui")),
             Gui.PySideUic.loadUi(os.path.join(UIPATH, "create_profiles2.ui")),
@@ -21,6 +23,7 @@ class CreateProfileTaskPanel:
 
         self.load_data()
         self.initialize_ui()
+
 
     def load_data(self):
         self.profiles = {}
@@ -40,6 +43,7 @@ class CreateProfileTaskPanel:
 
         self.form_proxy.label_image.setPixmap(QtGui.QPixmap(os.path.join(PROFILEIMAGES_PATH, "Warehouse.png")))
 
+        # sig/slot
         self.form_proxy.combo_material.currentIndexChanged.connect(self.on_material_changed)
         self.form_proxy.combo_family.currentIndexChanged.connect(self.on_family_changed)
         self.form_proxy.combo_size.currentIndexChanged.connect(self.on_size_changed)
@@ -73,6 +77,17 @@ class CreateProfileTaskPanel:
             execute_if_has_bool("Default Height Centered", self.form_proxy.cb_height_centered.setChecked)
             execute_if_has_bool("Default Width Centered", self.form_proxy.cb_width_centered.setChecked)
             execute_if_has_bool("Default Centered Bevel", self.form_proxy.cb_combined_bevel.setChecked)
+
+        # connect to proceed
+        self.form_proxy.combo_size.currentIndexChanged.connect(self.proceed)
+        self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_reverse_attachment.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_make_fillet.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_height_centered.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_width_centered.stateChanged.connect(self.proceed)
+        self.form_proxy.cb_combined_bevel.stateChanged.connect(self.proceed)
+
+        self.proceed()
 
     def on_material_changed(self, index):
         material = str(self.form_proxy.combo_material.currentText())
@@ -195,6 +210,10 @@ class CreateProfileTaskPanel:
             self.proceed()
             self.clean()
 
+            for o in self._objects:
+                o.ViewObject.Transparency = 0
+                o.ViewObject.ShapeColor = (0.44, 0.47, 0.5)
+
             App.ActiveDocument.commitTransaction()
             App.ActiveDocument.recompute()
 
@@ -216,6 +235,12 @@ class CreateProfileTaskPanel:
         Gui.Selection.removeSelectionGate()
 
     def proceed(self):
+        print("Procceed")
+        # remove existing temp obj
+        for o in self._objects:
+            App.ActiveDocument.removeObject(o.Name)
+        self._objects = []
+
         selection_list = Gui.Selection.getSelectionEx()
 
         p_name = "Profile_" if self.form_proxy.cb_prefix_profile_in_name.isChecked() else ""
@@ -253,15 +278,24 @@ class CreateProfileTaskPanel:
                     edges = [f"Edge{idx + 1}" for idx, e in enumerate(sketch_sel.Object.Shape.Edges)]
 
                 for i, edge in enumerate(edges):
-                    self.make_profile(sketch_sel.Object, edge, p_name)
+                    o = self.make_profile(sketch_sel.Object, edge, p_name)
+                    self._objects.append(o)
 
         else:
-            self.make_profile(None, None, p_name)
+            o = self.make_profile(None, None, p_name)
+            self._objects.append(o)
+
+        for o in self._objects:
+            o.recompute()
+
 
     def make_profile(self, sketch, edge, name):
         # Create an object in current document
         obj = App.ActiveDocument.addObject("Part::FeaturePython", name)
         obj.addExtension("Part::AttachExtensionPython")
+
+        obj.ViewObject.Transparency = 80
+        obj.ViewObject.ShapeColor = (0.0, 0.8, 0.0)
 
         # move it to the sketch's parent if possible
         if sketch is not None and len(sketch.Parents) > 0:
@@ -313,6 +347,8 @@ class CreateProfileTaskPanel:
 
         # Create a ViewObject in current GUI
         ViewProviderProfile(obj.ViewObject)
+
+        return obj
 
     def addSelection(self, doc, obj, sub, other):
         self.update_selection()
