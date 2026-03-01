@@ -6,11 +6,11 @@ import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore, QtGui
 
-from freecad.frameforge.create_profiles_tool import CreateProfileTaskPanel
+from freecad.frameforge.create_profiles_tool import BaseProfileTaskPanel
 from freecad.frameforge.profile import ANCHOR_X, ANCHOR_Y, Profile, ViewProviderProfile
 
 
-class EditProfileTaskPanel(CreateProfileTaskPanel):
+class EditProfileTaskPanel(BaseProfileTaskPanel):
     def __init__(self, profile):
         super().__init__()
 
